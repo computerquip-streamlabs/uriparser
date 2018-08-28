@@ -12,6 +12,15 @@ option(URIPARSER_DISABLE_TESTS "Disable building and running tests" OFF)
 option(URIPARSER_BUILD_DOCS "Whether or not to build documentation" OFF)
 option(URIPARSER_DISABLE_ANSI "Disable ANSI support" OFF)
 option(URIPARSER_DISABLE_UNICODE "Disable Unicode support" OFF)
+if (MSVC)
+  if (BUILD_SHARED_LIBS)
+    set(DEFAULT_MSVC_STATIC_RUNTIME OFF)
+  else ()
+    set(DEFAULT_MSVC_STATIC_RUNTIME ON)
+  endif ()
+
+  option(URIPARSER_MSVC_STATIC_RUNTIME "Link to static CRT (/MT rather than /MD)" ${DEFAULT_MSVC_STATIC_RUNTIME})
+endif ()
 
 check_c_source_compiles(
 	"
@@ -65,6 +74,22 @@ endif ()
 if (URIPARSER_DISABLE_UNICODE)
 	target_compile_definitions(liburiparser PUBLIC -DURI_NO_UNICODE)
 endif ()
+
+if (MSVC AND URIPARSER_MSVC_STATIC_RUNTIME)
+  # In case we are building static libraries, link also the runtime library statically
+  # so that MSVCR*.DLL is not required at runtime.
+  # https://msdn.microsoft.com/en-us/library/2kzt1wy3.aspx
+  # This is achieved by replacing msvc option /MD with /MT and /MDd with /MTd
+  # http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F
+    foreach (flag_var
+        CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+        CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+      if (${flag_var} MATCHES "/MD")
+        string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+      endif ()
+    endforeach ()
+endif ()
+
 
 target_include_directories(liburiparser	PUBLIC include)
 
