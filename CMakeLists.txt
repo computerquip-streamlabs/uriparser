@@ -10,7 +10,8 @@ include(CPack)
 
 option(URIPARSER_DISABLE_TESTS "Disable building and running tests" OFF)
 option(URIPARSER_BUILD_DOCS "Whether or not to build documentation" OFF)
-option(URIPARSER_DISABLE_UNICODE "Disable Unicode support, using ANSI characters instead" OFF)
+option(URIPARSER_DISABLE_ANSI "Disable ANSI support" OFF)
+option(URIPARSER_DISABLE_UNICODE "Disable Unicode support" OFF)
 
 check_c_source_compiles(
 	"
@@ -58,9 +59,10 @@ add_library(liburiparser
 
 set_target_properties(liburiparser PROPERTIES OUTPUT_NAME "uriparser")
 
-if (URIPARSER_DISABLE_UNICODE)
+if (URIPARSER_DISABLE_ANSI)
 	target_compile_definitions(liburiparser PUBLIC -DURI_NO_ANSI)
-else ()
+endif ()
+if (URIPARSER_DISABLE_UNICODE)
 	target_compile_definitions(liburiparser PUBLIC -DURI_NO_UNICODE)
 endif ()
 
